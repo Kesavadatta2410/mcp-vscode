@@ -2,7 +2,6 @@
  * list_files tool - List files in a directory matching a pattern
  */
 
-import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
 import { validateAndResolvePath, getStats } from '../utils/safety.js';

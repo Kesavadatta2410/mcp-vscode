@@ -1,14 +1,25 @@
 # MCP VSCode Code Editor
 
-A powerful AI-driven code editing system that enables AI clients to inspect, edit, and validate code through a headless VS Code instance controlled via Model Context Protocol (MCP).
+A powerful AI-driven code editing system that enables AI clients to control a headless VS Code instance with **full VS Code functionality** via Model Context Protocol (MCP).
 
 ## Overview
 
-This project provides two MCP servers and a Docker-based headless VS Code environment:
+This project provides comprehensive MCP servers that expose nearly all VS Code features to AI clients:
+
+- **File Operations** - Read, write, apply patches
+- **Diagnostics** - Code errors and warnings from language servers
+- **Extension Management** - Install, uninstall, enable, disable extensions
+- **Search** - Full-text and symbol search
+- **Code Intelligence** - Code actions, formatting, go-to-definition, find references
+- **Command Execution** - Run any VS Code command
+- **Terminal** - Create and interact with terminals (optional)
+- **Debug** - Debug sessions and breakpoints (optional)
+- **Tasks** - Run build, test, and custom tasks
 
 ## Features
 
 ### Repo MCP Server - File Operations
+
 | Tool | Description |
 |------|-------------|
 | `list_files` | List files matching a glob pattern |
@@ -17,12 +28,67 @@ This project provides two MCP servers and a Docker-based headless VS Code enviro
 | `apply_patch` | Apply a unified diff patch |
 | `get_tree` | Get directory tree structure |
 
-### VSCode MCP Server - Diagnostics
+### VSCode MCP Server - Full VS Code Control
+
+#### Core Operations
 | Tool | Description |
 |------|-------------|
 | `open_file_in_vscode` | Open a file in headless VS Code |
-| `get_diagnostics` | Get errors/warnings from language servers |
 | `close_file` | Close an open file |
+| `save_file` | Save a file (with optional content) |
+| `list_open_files` | List tracked open files |
+| `get_diagnostics` | Get errors/warnings from language servers |
+
+#### Extension Management
+| Tool | Description |
+|------|-------------|
+| `list_extensions` | List installed extensions |
+| `install_extension` | Install extension by marketplace ID |
+| `uninstall_extension` | Uninstall an extension |
+| `enable_extension` | Enable a disabled extension |
+| `disable_extension` | Disable an extension |
+
+#### Search
+| Tool | Description |
+|------|-------------|
+| `search_text` | Full-text search across files |
+| `search_symbols` | Search for symbols (functions, classes) |
+
+#### Code Intelligence
+| Tool | Description |
+|------|-------------|
+| `get_code_actions` | Get quick fixes and refactorings |
+| `format_document` | Format a document |
+| `go_to_definition` | Find symbol definition |
+| `find_references` | Find all references to a symbol |
+
+#### Commands & Settings
+| Tool | Description |
+|------|-------------|
+| `execute_command` | Execute any VS Code command by ID |
+| `get_settings` | Get user/workspace settings |
+| `update_settings` | Update settings |
+
+#### Tasks
+| Tool | Description |
+|------|-------------|
+| `list_tasks` | List available tasks |
+| `run_task` | Run a task or npm script |
+
+#### Terminal (if enabled)
+| Tool | Description |
+|------|-------------|
+| `create_terminal` | Create a new terminal |
+| `terminal_send` | Send input to terminal |
+| `terminal_read` | Read terminal output |
+| `close_terminal` | Close a terminal |
+
+#### Debug (if enabled)
+| Tool | Description |
+|------|-------------|
+| `debug_start` | Start debug session |
+| `debug_set_breakpoint` | Set/remove breakpoint |
+| `debug_stop` | Stop debug session |
 
 ## Quick Start
 
@@ -38,6 +104,7 @@ cd mcp-vscode-project
 
 # Install and build all packages
 .\scripts\build-all.ps1     # Windows
+./scripts/build-all.sh      # Linux/Mac
 ```
 
 ### 2. Configure Environment
@@ -78,37 +145,117 @@ Add to your MCP client configuration (e.g., Claude Desktop):
       "command": "node",
       "args": ["/path/to/mcp-vscode-project/servers/vscode-mcp-server/dist/index.js"],
       "env": {
-        "VSCODE_SERVICE_URL": "http://localhost:5007"
+        "VSCODE_SERVICE_URL": "http://localhost:5007",
+        "DISABLE_TERMINAL": "false",
+        "DISABLE_DEBUG": "false"
       }
     }
   }
 }
 ```
 
-## Usage Example
+## Example Workflows
 
-Here's how an AI client would use the system:
+### Install an Extension via MCP
 
 ```
-1. AI: "Let me explore the project structure"
-   → Calls: list_files(root_path="/workspace")
-   
-2. AI: "I'll read the main file"
-   → Calls: read_file(path="/workspace/src/index.ts")
-   
-3. AI: "I need to fix this bug, let me apply a patch"
-   → Calls: apply_patch(path="/workspace/src/index.ts", diff="...")
-   
-4. AI: "Now let me check for any errors"
-   → Calls: get_diagnostics(project_root="/workspace")
-   
-5. AI: "There's a type error, let me fix it"
-   → Calls: write_file(path="/workspace/src/index.ts", content="...")
-   
-6. AI: "Checking diagnostics again..."
-   → Calls: get_diagnostics()
-   → "No errors! Code is clean."
+AI: "I'll install the Python extension"
+→ Calls: install_extension(extension_id="ms-python.python")
+→ Returns: { success: true, message: "Extension installed" }
 ```
+
+### Format a Document
+
+```
+AI: "Let me format this file"
+→ Calls: format_document(path="/workspace/src/index.ts")
+→ Returns: { success: true, content: "// Formatted code..." }
+```
+
+### Full-Text Search
+
+```
+AI: "I'll search for TODO comments"
+→ Calls: search_text(query="TODO:", path="/workspace", max_results=50)
+→ Returns matched files, lines, and context
+```
+
+### Code Intelligence Workflow
+
+```
+1. AI: "Let me find where this function is defined"
+   → Calls: go_to_definition(path="/workspace/src/app.ts", symbol="handleRequest")
+   → Returns: [{ file: "/workspace/src/handlers.ts", line: 45 }]
+
+2. AI: "Now find all usages"
+   → Calls: find_references(path="/workspace/src/handlers.ts", symbol="handleRequest")
+   → Returns: List of all files/locations referencing handleRequest
+```
+
+### Debug Session (if enabled)
+
+```
+1. AI: "Start a debug session"
+   → Calls: debug_start(config={ type: "node", program: "${workspaceFolder}/app.js" })
+   → Returns: { sessionId: "abc123" }
+
+2. AI: "Set a breakpoint"
+   → Calls: debug_set_breakpoint(session_id="abc123", file="/workspace/app.js", line=42)
+
+3. AI: "Stop debugging"
+   → Calls: debug_stop(session_id="abc123")
+```
+
+## Security
+
+### Allowlists
+
+Configure in environment variables:
+
+```bash
+# Only allow specific VS Code commands
+ALLOWED_VSCODE_COMMANDS=workbench.action.files.save,editor.action.formatDocument
+
+# Only allow specific extensions
+ALLOWED_EXTENSIONS=ms-python.python,dbaeumer.vscode-eslint
+```
+
+### Feature Toggles
+
+```bash
+# Disable terminal for security
+DISABLE_TERMINAL=true
+
+# Disable debug capabilities
+DISABLE_DEBUG=true
+
+# Enable security logging
+SECURITY_LOGGING=true
+```
+
+### Path Security
+
+The Repo MCP Server enforces:
+- **Allowed Directories**: Only paths within `ALLOWED_DIRECTORIES` can be accessed
+- **Path Traversal Prevention**: Resolved paths are validated
+- **File Size Limits**: 10MB limit on file reads
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ALLOWED_DIRECTORIES` | Comma-separated allowed paths | None (required) |
+| `VSCODE_SERVICE_URL` | VS Code service URL | `http://localhost:5007` |
+| `PROJECT_PATH` | Project to mount in Docker | Current directory |
+| `VSCODE_PORT` | VS Code web interface port | `3000` |
+| `DIAGNOSTICS_PORT` | Service API port | `5007` |
+| `DISABLE_TERMINAL` | Disable terminal features | `false` |
+| `DISABLE_DEBUG` | Disable debug features | `false` |
+| `SECURITY_LOGGING` | Log sensitive operations | `true` |
+| `ALLOWED_VSCODE_COMMANDS` | Command allowlist | Empty (allow all) |
+| `ALLOWED_EXTENSIONS` | Extension allowlist | Empty (allow all) |
 
 ## Project Structure
 
@@ -123,78 +270,36 @@ mcp-vscode-project/
 │   │   └── package.json
 │   └── vscode-mcp-server/       # VS Code bridge MCP server
 │       ├── src/
-│       │   ├── index.ts         # Server entry point
-│       │   └── client/          # HTTP client for diagnostics
+│       │   ├── index.ts         # Server with all tools
+│       │   ├── types.ts         # Type definitions
+│       │   └── client/          # HTTP client for service
 │       └── package.json
 ├── vscode-headless/
-│   ├── Dockerfile               # OpenVSCode + diagnostics
+│   ├── Dockerfile               # OpenVSCode + service
 │   ├── docker-compose.yml       # Container orchestration
 │   ├── start.sh                 # Container startup script
-│   └── diagnostics-service/     # REST API for diagnostics
-│       └── src/index.ts
+│   └── diagnostics-service/     # REST API service
+│       └── src/index.ts         # Full VS Code API
 ├── config/
 │   ├── .env.example             # Environment template
-│   └── mcp-config.example.json  # MCP client config example
+│   └── mcp-config.example.json  # MCP client config
 ├── scripts/
 │   ├── build-all.ps1/sh         # Build all packages
 │   └── dev-start.ps1/sh         # Start dev environment
 └── README.md
 ```
 
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ALLOWED_DIRECTORIES` | Comma-separated allowed paths | None (required) |
-| `VSCODE_SERVICE_URL` | Diagnostics service URL | `http://localhost:5007` |
-| `PROJECT_PATH` | Project to mount in Docker | Current directory |
-| `VSCODE_PORT` | VS Code web interface port | `3000` |
-| `DIAGNOSTICS_PORT` | Diagnostics API port | `5007` |
-
-## Diagnostics Response Format
-
-```json
-{
-  "success": true,
-  "diagnostics": [
-    {
-      "file": "/workspace/src/index.ts",
-      "range": {
-        "start": { "line": 10, "character": 5 },
-        "end": { "line": 10, "character": 15 }
-      },
-      "severity": "error",
-      "message": "Property 'foo' does not exist on type 'Bar'",
-      "source": "typescript",
-      "code": "TS2339"
-    }
-  ],
-  "summary": {
-    "totalErrors": 1,
-    "totalWarnings": 0,
-    "totalInfo": 0,
-    "totalHints": 0,
-    "totalFiles": 1
-  }
-}
-```
-
-## Security
-
-The Repo MCP Server enforces security through:
-
-- **Allowed Directories**: Only paths within `ALLOWED_DIRECTORIES` can be accessed
-- **Path Traversal Prevention**: Resolved paths are validated against allowed roots
-- **File Size Limits**: 10MB limit on file reads
-
 ## Supported Languages
 
-The diagnostics service supports:
+The service supports diagnostics for:
 - **TypeScript/JavaScript** - via TypeScript compiler
 - **ESLint** - if configured in project
 - **Python** - via Pyright
+
+Formatting is supported via:
+- **Prettier** - for JS/TS/JSON
+- **ESLint** - as fallback
+- **Black** - for Python
 
 ## Development
 
@@ -218,17 +323,52 @@ docker-compose logs -f
 docker-compose up --build -d
 ```
 
-### Diagnostics not working
+### Service not responding
 ```bash
 # Check health
 curl http://localhost:5007/health
 
-# Check if TypeScript is installed in project
-ls node_modules/typescript
+# Should return:
+# { "status": "ok", "version": "2.0.0", "features": {...} }
 ```
 
-### Permission errors
-Ensure your project directory is accessible to Docker and the `ALLOWED_DIRECTORIES` is set correctly.
+### Extension operations failing
+```bash
+# Extensions require VS Code CLI - check if available
+docker exec -it vscode-headless which code
+```
+
+### Terminal/Debug disabled
+Check that `DISABLE_TERMINAL` and `DISABLE_DEBUG` are set to `false` in your environment.
+
+## API Reference
+
+The VS Code service exposes these endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/open` | POST | Open file |
+| `/close` | POST | Close file |
+| `/diagnostics` | GET | Get diagnostics |
+| `/extensions` | GET | List extensions |
+| `/extensions/install` | POST | Install extension |
+| `/extensions/uninstall` | POST | Uninstall extension |
+| `/search/text` | POST | Full-text search |
+| `/search/symbols` | POST | Symbol search |
+| `/code/actions` | POST | Get code actions |
+| `/code/format` | POST | Format document |
+| `/code/definition` | POST | Go to definition |
+| `/code/references` | POST | Find references |
+| `/command/execute` | POST | Execute command |
+| `/workspace/settings` | GET/POST | Settings |
+| `/tasks` | GET | List tasks |
+| `/tasks/run` | POST | Run task |
+| `/terminal/create` | POST | Create terminal |
+| `/terminal/:id` | GET/DELETE | Read/close terminal |
+| `/debug/start` | POST | Start debug |
+| `/debug/breakpoint` | POST | Set breakpoint |
+| `/debug/stop` | DELETE | Stop debug |
 
 ## License
 
