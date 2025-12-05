@@ -1,0 +1,40 @@
+# =======================================================
+# Docker Compose for MCP VSCode Project
+# =======================================================
+# Runs headless OpenVSCode Server with diagnostics service
+# =======================================================
+
+version: '3.8'
+
+services:
+  vscode-headless:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-vscode-headless
+    ports:
+      # OpenVSCode Server web interface (optional, for debugging)
+      - "${VSCODE_PORT:-3000}:3000"
+      # Diagnostics service REST API
+      - "${DIAGNOSTICS_PORT:-5007}:5007"
+    volumes:
+      # Mount the project directory
+      - "${PROJECT_PATH:-.}:/workspace"
+    environment:
+      - WORKSPACE_PATH=/workspace
+      - PORT=5007
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Add more services here if needed
+  # For example, a language-specific server container
+
+# Networks
+networks:
+  default:
+    name: mcp-vscode-network

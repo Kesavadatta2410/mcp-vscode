@@ -1,0 +1,32 @@
+{
+  "name": "mcp-vscode-project",
+  "version": "1.0.0",
+  "description": "AI-driven code editing via headless VS Code controlled through MCP",
+  "private": true,
+  "workspaces": [
+    "servers/repo-mcp-server",
+    "servers/vscode-mcp-server",
+    "vscode-headless/diagnostics-service"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "lint": "eslint . --ext .ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.55.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

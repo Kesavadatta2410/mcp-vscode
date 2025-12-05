@@ -1,0 +1,31 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "description": "Example MCP client configuration for connecting to VSCode MCP servers",
+    "mcpServers": {
+        "repo-server": {
+            "command": "node",
+            "args": [
+                "./servers/repo-mcp-server/dist/index.js"
+            ],
+            "env": {
+                "ALLOWED_DIRECTORIES": "/path/to/your/projects,/another/allowed/path"
+            },
+            "description": "File system operations server - read, write, patch files"
+        },
+        "vscode-server": {
+            "command": "node",
+            "args": [
+                "./servers/vscode-mcp-server/dist/index.js"
+            ],
+            "env": {
+                "VSCODE_SERVICE_URL": "http://localhost:5007"
+            },
+            "description": "VSCode diagnostics server - get errors and warnings from language servers"
+        }
+    },
+    "_comments": {
+        "usage": "Copy this file and modify paths according to your setup",
+        "allowed_directories": "List of directories the repo server can access (comma-separated)",
+        "vscode_service_url": "URL where the diagnostics service is running (inside Docker)"
+    }
+}
