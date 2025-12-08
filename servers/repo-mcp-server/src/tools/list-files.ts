@@ -31,10 +31,11 @@ export async function listFiles(params: ListFilesParams): Promise<FileInfo[]> {
         throw new Error(`Path "${root_path}" is not a valid directory`);
     }
 
-    // Build the glob pattern
+    // Build the glob pattern (glob requires forward slashes, even on Windows)
+    const posixRoot = resolvedRoot.replace(/\\/g, '/');
     const globPattern = recursive
-        ? path.join(resolvedRoot, '**', pattern)
-        : path.join(resolvedRoot, pattern);
+        ? `${posixRoot}/**/${pattern}`
+        : `${posixRoot}/${pattern}`;
 
     // Find matching files
     const matches = await glob(globPattern, {

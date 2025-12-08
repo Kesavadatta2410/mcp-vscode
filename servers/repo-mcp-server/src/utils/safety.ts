@@ -6,6 +6,19 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 /**
+ * Helper to normalize path, resolving symlinks and Windows short paths
+ */
+function normalizePath(p: string): string {
+    try {
+        // realpathSync.native handles Windows short paths (like KESAV~1)
+        return fs.realpathSync.native(p);
+    } catch {
+        // If path doesn't exist yet, just resolve it
+        return path.resolve(p);
+    }
+}
+
+/**
  * Get the list of allowed directories from environment variable
  */
 export function getAllowedDirectories(): string[] {
@@ -14,7 +27,7 @@ export function getAllowedDirectories(): string[] {
         .split(',')
         .map(dir => dir.trim())
         .filter(dir => dir.length > 0)
-        .map(dir => path.resolve(dir));
+        .map(dir => normalizePath(dir));
 }
 
 /**
@@ -32,15 +45,15 @@ export function isPathAllowed(targetPath: string): boolean {
         return false;
     }
 
-    // Resolve to absolute path and normalize
-    const resolvedPath = path.resolve(targetPath);
+    // Resolve to absolute path and normalize (handles Windows short paths)
+    const resolvedPath = normalizePath(targetPath);
 
     // Check if the path starts with any allowed directory
     return allowedDirs.some(allowedDir => {
         const relative = path.relative(allowedDir, resolvedPath);
         // Path is within allowed dir if relative path doesn't start with '..'
         // and is not an absolute path
-        return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+        return relative !== '' ? !relative.startsWith('..') && !path.isAbsolute(relative) : true;
     });
 }
 
