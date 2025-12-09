@@ -4,21 +4,21 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import type { Octokit } from '@octokit/rest';
 
-// Create mock functions
-const mockListForUser = vi.fn();
-const mockCreate = vi.fn();
+// Create mock Octokit instance
+const mockOctokit = {
+    repos: {
+        listForUser: vi.fn()
+    },
+    issues: {
+        create: vi.fn()
+    }
+} as unknown as Octokit;
 
-// Mock the utils module
+// Mock the utils module with factory function
 vi.mock('../utils', () => ({
-    getOctokit: vi.fn(() => ({
-        repos: {
-            listForUser: mockListForUser
-        },
-        issues: {
-            create: mockCreate
-        }
-    })),
+    getOctokit: vi.fn(() => mockOctokit),
     hasGitHubToken: vi.fn(() => true)
 }));
 
@@ -50,14 +50,14 @@ describe('GitHub MCP Tools', () => {
                 }
             ];
 
-            mockListForUser.mockResolvedValue({ data: mockRepos });
+            mockOctokit.repos.listForUser.mockResolvedValue({ data: mockRepos } as any);
 
             const result = await githubGetRepos({ user_or_org: 'user' });
 
             expect(result).toHaveLength(1);
             expect(result[0].name).toBe('repo1');
             expect(result[0].visibility).toBe('public');
-            expect(mockListForUser).toHaveBeenCalledWith({
+            expect(mockOctokit.repos.listForUser).toHaveBeenCalledWith({
                 username: 'user',
                 type: 'owner',
                 per_page: 30,
@@ -80,7 +80,7 @@ describe('GitHub MCP Tools', () => {
                 }
             ];
 
-            mockListForUser.mockResolvedValue({ data: mockRepos });
+            mockOctokit.repos.listForUser.mockResolvedValue({ data: mockRepos } as any);
 
             const result = await githubGetRepos({ user_or_org: 'user' });
 
@@ -97,7 +97,7 @@ describe('GitHub MCP Tools', () => {
                 state: 'open'
             };
 
-            mockCreate.mockResolvedValue({ data: mockIssue });
+            mockOctokit.issues.create.mockResolvedValue({ data: mockIssue } as any);
 
             const result = await githubCreateIssue({
                 owner: 'user',
@@ -109,7 +109,7 @@ describe('GitHub MCP Tools', () => {
             expect(result.success).toBe(true);
             expect(result.message).toContain('#42');
             expect(result.data?.number).toBe(42);
-            expect(mockCreate).toHaveBeenCalledWith({
+            expect(mockOctokit.issues.create).toHaveBeenCalledWith({
                 owner: 'user',
                 repo: 'repo',
                 title: 'Test issue',
@@ -127,11 +127,11 @@ describe('GitHub MCP Tools', () => {
 
             expect(result.success).toBe(false);
             expect(result.message).toContain('title cannot be empty');
-            expect(mockCreate).not.toHaveBeenCalled();
+            expect(mockOctokit.issues.create).not.toHaveBeenCalled();
         });
 
         it('should handle API errors', async () => {
-            mockCreate.mockRejectedValue(new Error('API rate limit exceeded'));
+            mockOctokit.issues.create.mockRejectedValue(new Error('API rate limit exceeded'));
 
             const result = await githubCreateIssue({
                 owner: 'user',
@@ -150,7 +150,7 @@ describe('GitHub MCP Tools', () => {
                 state: 'open'
             };
 
-            mockCreate.mockResolvedValue({ data: mockIssue });
+            mockOctokit.issues.create.mockResolvedValue({ data: mockIssue } as any);
 
             await githubCreateIssue({
                 owner: 'user',
@@ -159,7 +159,7 @@ describe('GitHub MCP Tools', () => {
                 labels: ['bug', 'high-priority']
             });
 
-            expect(mockCreate).toHaveBeenCalledWith(
+            expect(mockOctokit.issues.create).toHaveBeenCalledWith(
                 expect.objectContaining({
                     labels: ['bug', 'high-priority']
                 })
