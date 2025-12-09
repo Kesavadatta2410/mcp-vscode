@@ -8,6 +8,8 @@ This project provides comprehensive MCP servers that expose nearly all VS Code f
 
 - **File Operations** - Read, write, apply patches
 - **Diagnostics** - Code errors and warnings from language servers
+- **Git Integration** - Local Git operations (status, commit, push, pull)
+- **GitHub Integration** - GitHub API access (repos, issues, PRs)
 - **Extension Management** - Install, uninstall, enable, disable extensions
 - **Search** - Full-text and symbol search
 - **Code Intelligence** - Code actions, formatting, go-to-definition, find references
@@ -27,6 +29,31 @@ This project provides comprehensive MCP servers that expose nearly all VS Code f
 | `write_file` | Write content to a file |
 | `apply_patch` | Apply a unified diff patch |
 | `get_tree` | Get directory tree structure |
+
+### Git MCP Server - Local Git Operations
+
+| Tool | Description |
+|------|-------------|
+| `git_status` | Get repository status (modified, staged, untracked files) |
+| `git_diff` | Show differences between commits/branches |
+| `git_log` | View commit history |
+| `git_branches` | List local and remote branches |
+| `git_checkout` | Checkout branch or commit (with safety checks) |
+| `git_commit` | Stage and commit changes |
+| `git_push` | Push commits to remote |
+| `git_pull` | Pull changes from remote (with conflict detection) |
+
+### GitHub MCP Server - GitHub API Integration
+
+| Tool | Description |
+|------|-------------|
+| `github_get_repos` | List repositories for user/organization |
+| `github_get_repo` | Get repository details |
+| `github_create_repo` | Create new repository |
+| `github_list_issues` | List issues with filtering |
+| `github_create_issue` | Create new issue |
+| `github_get_pull_requests` | List pull requests |
+| `github_create_pull_request` | Create new pull request |
 
 ### VSCode MCP Server - Full VS Code Control
 
