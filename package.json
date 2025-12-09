@@ -6,6 +6,8 @@
   "workspaces": [
     "servers/repo-mcp-server",
     "servers/vscode-mcp-server",
+    "servers/git-mcp-server",
+    "servers/github-mcp-server",
     "vscode-headless/diagnostics-service"
   ],
   "scripts": {
