@@ -8,6 +8,7 @@
     "servers/vscode-mcp-server",
     "servers/git-mcp-server",
     "servers/github-mcp-server",
+    "servers/exec-mcp-server",
     "vscode-headless/diagnostics-service"
   ],
   "scripts": {

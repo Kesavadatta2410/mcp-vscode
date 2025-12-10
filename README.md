@@ -10,6 +10,7 @@ This project provides comprehensive MCP servers that expose nearly all VS Code f
 - **Diagnostics** - Code errors and warnings from language servers
 - **Git Integration** - Local Git operations (status, commit, push, pull)
 - **GitHub Integration** - GitHub API access (repos, issues, PRs)
+- **Code Execution** - Run Python and JavaScript code with safety controls
 - **Extension Management** - Install, uninstall, enable, disable extensions
 - **Search** - Full-text and symbol search
 - **Code Intelligence** - Code actions, formatting, go-to-definition, find references
@@ -54,6 +55,25 @@ This project provides comprehensive MCP servers that expose nearly all VS Code f
 | `github_create_issue` | Create new issue |
 | `github_get_pull_requests` | List pull requests |
 | `github_create_pull_request` | Create new pull request |
+
+### Exec MCP Server - Code Execution
+
+> ⚠️ **Security Warning**: Code execution is powerful and potentially dangerous. Only enable in trusted environments where you control the code being executed.
+
+| Tool | Description |
+|------|-------------|
+| `run_python_snippet` | Execute Python code string with timeout and output limits |
+| `run_js_snippet` | Execute JavaScript code string with timeout and output limits |
+| `run_python_file` | Run Python script file from allowed directories |
+| `run_js_file` | Run JavaScript script file from allowed directories |
+| `exec_status` | Check code execution configuration and status |
+
+**Features**:
+- Configurable timeouts (default: 30s, max: 300s)
+- Output size limits (default: 64KB)
+- Path validation (only allowed directories)
+- Environment variable passing for snippets
+- Command-line arguments for file execution
 
 ### VSCode MCP Server - Full VS Code Control
 
@@ -283,6 +303,176 @@ The Repo MCP Server enforces:
 | `SECURITY_LOGGING` | Log sensitive operations | `true` |
 | `ALLOWED_VSCODE_COMMANDS` | Command allowlist | Empty (allow all) |
 | `ALLOWED_EXTENSIONS` | Extension allowlist | Empty (allow all) |
+| `ENABLE_CODE_EXECUTION` | Enable Python/JS execution | `false` |
+| `PYTHON_EXECUTABLE` | Python executable path | `python3` |
+| `NODE_EXECUTABLE` | Node.js executable path | `node` |
+| `EXEC_DEFAULT_TIMEOUT_SECONDS` | Default code timeout | `30` |
+| `EXEC_MAX_TIMEOUT_SECONDS` | Maximum allowed timeout | `300` |
+| `EXEC_MAX_OUTPUT_BYTES` | Max output size | `65536` (64KB) |
+
+## Code Execution (Python & JavaScript)
+
+### Security Warning
+
+⚠️ **WARNING**: Code execution allows running arbitrary Python and JavaScript code. This is powerful but dangerous:
+- Only enable in **trusted environments**
+- Code runs with the **same privileges** as the MCP server process
+- All safety controls are **best-effort** - determined attackers may bypass them
+
+**Recommendation**: Keep `ENABLE_CODE_EXECUTION=false` unless you absolutely need it and control all code being executed.
+
+### Configuration
+
+```bash
+# Enable code execution (disabled by default)
+ENABLE_CODE_EXECUTION=true
+
+# Configure executables
+PYTHON_EXECUTABLE=python3  # or 'python', or full path like /usr/bin/python3
+NODE_EXECUTABLE=node        # or full path like /usr/local/bin/node
+
+# Set timeouts (in seconds)
+EXEC_DEFAULT_TIMEOUT_SECONDS=30    # Default timeout
+EXEC_MAX_TIMEOUT_SECONDS=300       # Maximum allowed timeout (5 minutes)
+
+# Output size limit (in bytes)
+EXEC_MAX_OUTPUT_BYTES=65536        # 64 KB default
+```
+
+### Usage Examples
+
+#### Python Snippet
+
+Execute inline Python code:
+
+```json
+{
+  "tool": "run_python_snippet",
+  "arguments": {
+    "code": "print('Hello from Python!')\nprint(f'2 + 2 = {2+2}')",
+    "timeoutSeconds": 5
+  }
+}
+```
+
+With arguments passed via environment:
+
+```json
+{
+  "tool": "run_python_snippet",
+  "arguments": {
+    "code": "import os, json\nargs = json.loads(os.environ['EXEC_ARGS_JSON'])\nprint(f\"Processing {args['count']} items\")",
+    "args": { "count": 42, "name": "test" },
+    "timeoutSeconds": 10
+  }
+}
+```
+
+#### JavaScript Snippet
+
+Execute inline JavaScript:
+
+```json
+{
+  "tool": "run_js_snippet",
+  "arguments": {
+    "code": "console.log('Hello from Node.js!');\nconsole.log('Platform:', process.platform);",
+    "timeoutSeconds": 5
+  }
+}
+```
+
+With async/await:
+
+```json
+{
+  "tool": "run_js_snippet",
+  "arguments": {
+    "code": "async function main() {\n  await new Promise(r => setTimeout(r, 1000));\n  console.log('Done!');\n}\nmain();",
+    "timeoutSeconds": 5
+  }
+}
+```
+
+#### Python File
+
+Execute a Python script file:
+
+```json
+{
+  "tool": "run_python_file",
+  "arguments": {
+    "path": "scripts/process_data.py",
+    "args": ["--input", "data.json", "--output", "result.json"],
+    "timeoutSeconds": 60
+  }
+}
+```
+
+#### JavaScript File
+
+Execute a Node.js script file:
+
+```json
+{
+  "tool": "run_js_file",
+  "arguments": {
+    "path": "scripts/build.js",
+    "args": ["production"],
+    "timeoutSeconds": 120
+  }
+}
+```
+
+### Response Format
+
+All execution tools return:
+
+```json
+{
+  "success": true,
+  "stdout": "Output from the script...",
+  "stderr": "",
+  "exitCode": 0,
+  "durationMs": 1234,
+  "timedOut": false,
+  "truncated": false
+}
+```
+
+On error:
+
+```json
+{
+  "success": false,
+  "stdout": "",
+  "stderr": "Error message...",
+  "exitCode": 1,
+  "durationMs": 567,
+  "timedOut": false,
+  "error": {
+    "type": "ExecutionFailed",
+    "message": "Script failed with error..."
+  }
+}
+```
+
+### Safety Features
+
+1. **Feature Toggle**: Must explicitly enable with `ENABLE_CODE_EXECUTION=true`
+2. **Timeouts**: All executions have mandatory timeouts to prevent infinite loops
+3. **Output Limits**: stdout/stderr truncated at configurable size to prevent memory exhaustion
+4. **Path Validation**: File execution only allowed within `ALLOWED_DIRECTORIES`
+5. **Process Isolation**: Each execution runs in a separate child process
+6. **No Shell Injection**: Uses direct process spawning, not shell commands
+
+### Limitations
+
+- No interactive input/output
+- Limited to single-process execution (no multiprocessing)
+- Working directory must be within `ALLOWED_DIRECTORIES`
+- No persistent state between executions
+- Resource limits depend on OS (no built-in CPU/memory limits)
 
 ## Project Structure
 
@@ -294,6 +484,15 @@ mcp-vscode-project/
 │   │   │   ├── index.ts         # Server entry point
 │   │   │   ├── tools/           # Tool implementations
 │   │   │   └── utils/           # Safety & diff utilities
+│   │   └── package.json
+│   ├── git-mcp-server/          # Git operations MCP server
+│   ├── github-mcp-server/       # GitHub API MCP server
+│   ├── exec-mcp-server/         # Code execution MCP server
+│   │   ├── src/
+│   │   │   ├── index.ts         # Server entry point
+│   │   │   ├── tools/           # Execution tools
+│   │   │   ├── utils/           # Process executor, safety
+│   │   │   └── __tests__/       # Unit tests
 │   │   └── package.json
 │   └── vscode-mcp-server/       # VS Code bridge MCP server
 │       ├── src/
