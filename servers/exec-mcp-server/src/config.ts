@@ -51,7 +51,7 @@ function getDefaultWorkingDirectory(): string {
  */
 export function getExecConfig(): ExecConfig {
     const enabled = process.env.ENABLE_CODE_EXECUTION === 'true';
-    const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python3';
+    const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python';
     const nodeExecutable = process.env.NODE_EXECUTABLE || 'node';
     const defaultTimeoutSeconds = parseInt(process.env.EXEC_DEFAULT_TIMEOUT_SECONDS || '30', 10);
     const maxTimeoutSeconds = parseInt(process.env.EXEC_MAX_TIMEOUT_SECONDS || '300', 10);

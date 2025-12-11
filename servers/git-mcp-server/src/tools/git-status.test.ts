@@ -86,7 +86,7 @@ describe('git_status', () => {
         expect(result.staged).toEqual([]);
     });
 
-    it.skip('should throw error for non-git directory', async () => {
+    it('should throw error for non-git directory', async () => {
         const nonGitDir = await fs.mkdtemp(path.join(os.tmpdir(), 'non-git-'));
 
         try {
