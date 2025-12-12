@@ -5,8 +5,8 @@
     "main": "dist/index-simple.js",
     "type": "module",
     "scripts": {
-        "dev": "node --loader ts-node/esm/transpile-only src/index-simple.ts",
-        "dev:watch": "nodemon --exec node --loader ts-node/esm/transpile-only src/index-simple.ts",
+        "dev": "npx tsx src/index-simple.ts",
+        "dev:watch": "npx tsx watch src/index-simple.ts",
         "build": "tsc",
         "start": "node dist/index-simple.js"
     },

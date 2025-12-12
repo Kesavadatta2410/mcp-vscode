@@ -39,3 +39,10 @@ coverage/
 
 # Docker
 .docker/
+
+# API Keys and Credentials - NEVER COMMIT
+firebase/serviceAccountKey.json
+.env
+.env.*
+*.key
+*.pem

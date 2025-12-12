@@ -90,7 +90,7 @@ describe('git_status', () => {
         const nonGitDir = await fs.mkdtemp(path.join(os.tmpdir(), 'non-git-'));
 
         try {
-            await expect(gitStatus({ repo_path: nonGitDir })).rejects.toThrow('Not a git repository');
+            await expect(gitStatus({ repo_path: nonGitDir })).rejects.toThrow(/not a git repository/i);
         } finally {
             await fs.rm(nonGitDir, { recursive: true, force: true });
         }

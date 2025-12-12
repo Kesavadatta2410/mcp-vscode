@@ -6,16 +6,20 @@
 import express from 'express';
 import cors from 'cors';
 import MCPClientManager from './mcpClient.js';
+import assistantRouter from './routes/assistant.js';
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '4000', 10);
+const PORT = process.env.PORT || 4000;
 
-// Initialize MCP manager
+// MCP Client Manager
 const mcpManager = new MCPClientManager();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Mount assistant routes
+app.use('/api/assistant', assistantRouter);
 
 // Health check
 app.get('/health', (req, res) => {

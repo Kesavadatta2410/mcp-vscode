@@ -28,7 +28,23 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, selectedFile }) => {
     };
 
     const parseTree = (data: any): FileNode[] => {
-        // Parse tree data from MCP response
+        // Handle JSON object format from backend (primary format)
+        if (data && typeof data === 'object') {
+            // If it's directly a tree node with children
+            if (data.children && Array.isArray(data.children)) {
+                return data.children.map((child: any) => convertToFileNode(child));
+            }
+            // If it's a single root node
+            if (data.name && data.type) {
+                return [convertToFileNode(data)];
+            }
+            // If it's already an array of nodes
+            if (Array.isArray(data)) {
+                return data.map((item: any) => convertToFileNode(item));
+            }
+        }
+
+        // Parse tree data from MCP response (legacy string format)
         if (typeof data === 'string') {
             // Parse tree string format
             const lines = data.split('\n').filter(line => line.trim());
@@ -77,6 +93,16 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, selectedFile }) => {
             return root;
         }
         return [];
+    };
+
+    // Helper to convert backend node to FileNode
+    const convertToFileNode = (node: any): FileNode => {
+        return {
+            name: node.name,
+            path: node.path,
+            type: node.type,
+            children: node.children ? node.children.map((c: any) => convertToFileNode(c)) : undefined
+        };
     };
 
     const toggleDirectory = (path: string) => {

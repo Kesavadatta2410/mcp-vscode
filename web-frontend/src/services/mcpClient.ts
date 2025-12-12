@@ -40,9 +40,17 @@ class MCPClient {
     async call<T = any>(options: MCPCallOptions): Promise<MCPResponse<T>> {
         try {
             const response = await this.client.post(`/mcp/${options.server}/${options.tool}`, options.args);
+            // Backend returns { success: true, data: {...} }, extract the data field
+            const backendResponse = response.data;
+            if (backendResponse.success && backendResponse.data !== undefined) {
+                return {
+                    success: true,
+                    data: backendResponse.data,
+                };
+            }
             return {
-                success: true,
-                data: response.data,
+                success: backendResponse.success ?? true,
+                data: backendResponse.data ?? backendResponse,
             };
         } catch (error: any) {
             console.error(`MCP call failed: ${options.server}.${options.tool}`, error);
@@ -112,7 +120,7 @@ class MCPClient {
             server: 'exec',
             tool: 'run_python_file',
             args: {
-                path: filePath,
+                file_path: filePath,
                 args: args || [],
                 timeoutSeconds: timeoutSeconds || 30,
             },
@@ -122,9 +130,9 @@ class MCPClient {
     async runJsFile(filePath: string, args?: string[], timeoutSeconds?: number): Promise<MCPResponse<any>> {
         return this.call({
             server: 'exec',
-            tool: 'run_js_file',
+            tool: 'run_javascript_file',
             args: {
-                path: filePath,
+                file_path: filePath,
                 args: args || [],
                 timeoutSeconds: timeoutSeconds || 30,
             },
