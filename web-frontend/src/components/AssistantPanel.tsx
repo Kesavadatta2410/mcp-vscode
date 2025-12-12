@@ -29,10 +29,10 @@ const AssistantPanel: React.FC<AssistantPanelProps> = ({
         setLoading(true);
         setResponse(null);
 
-        const result = await assistantService.generate({
+        const result = await assistantService.generateCode({
             prompt,
             context: {
-                currentFile: currentFile || undefined,
+                filePath: currentFile || undefined,
                 selectedCode,
             },
             action,

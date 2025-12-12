@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import mcpClient from '../services/mcpClient';
+// import mcpClient from '../services/mcpClient';
 
 describe('MCP Client', () => {
     it('constructs correct API URL for listFiles', () => {

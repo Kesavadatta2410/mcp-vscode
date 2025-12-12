@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import mcpClient from '@/services/mcpClient';
 import type { GitStatus } from '@/types';
-import { FaCodeBranch, FaSync, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaCodeBranch, FaSync, FaCheck } from 'react-icons/fa';
 
 const GitPanel: React.FC = () => {
     const [status, setStatus] = useState<GitStatus | null>(null);
@@ -128,12 +128,12 @@ const GitPanel: React.FC = () => {
                                                 />
                                                 <span
                                                     className={`text-xs font-mono px-1 rounded ${fileStatus === 'M'
-                                                            ? 'bg-yellow-900 text-yellow-300'
-                                                            : fileStatus === 'A'
-                                                                ? 'bg-green-900 text-green-300'
-                                                                : fileStatus === 'D'
-                                                                    ? 'bg-red-900 text-red-300'
-                                                                    : 'bg-blue-900 text-blue-300'
+                                                        ? 'bg-yellow-900 text-yellow-300'
+                                                        : fileStatus === 'A'
+                                                            ? 'bg-green-900 text-green-300'
+                                                            : fileStatus === 'D'
+                                                                ? 'bg-red-900 text-red-300'
+                                                                : 'bg-blue-900 text-blue-300'
                                                         }`}
                                                 >
                                                     {fileStatus}

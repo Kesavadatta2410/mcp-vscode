@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaSearch, FaTimes } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
 import mcpClient from '@/services/mcpClient';
 
 interface SearchResult {
@@ -70,8 +70,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ onFileSelect }) => {
                     <button
                         onClick={() => setSearchType('files')}
                         className={`px-3 py-1 text-xs rounded ${searchType === 'files'
-                                ? 'bg-blue-600'
-                                : 'bg-vscode-editor hover:bg-vscode-active'
+                            ? 'bg-blue-600'
+                            : 'bg-vscode-editor hover:bg-vscode-active'
                             }`}
                     >
                         Files
@@ -79,8 +79,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ onFileSelect }) => {
                     <button
                         onClick={() => setSearchType('content')}
                         className={`px-3 py-1 text-xs rounded ${searchType === 'content'
-                                ? 'bg-blue-600'
-                                : 'bg-vscode-editor hover:bg-vscode-active'
+                            ? 'bg-blue-600'
+                            : 'bg-vscode-editor hover:bg-vscode-active'
                             }`}
                     >
                         Content

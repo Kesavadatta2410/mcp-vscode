@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import FileTree from './components/FileTree';
 import MonacoEditor from './components/MonacoEditor';
 import ExecutionPanel from './components/ExecutionPanel';
 import DiagnosticsPanel from './components/DiagnosticsPanel';
 import mcpClient from './services/mcpClient';
 import type { DiagnosticItem } from './types';
-import { FaSave, FaPlay, FaBug, FaTerminal } from 'react-icons/fa';
+import { FaSave, FaPlay, FaBug } from 'react-icons/fa';
 import { VscCode } from 'react-icons/vsc';
 
 function App() {
