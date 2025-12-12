@@ -46,3 +46,43 @@ firebase/serviceAccountKey.json
 .env.*
 *.key
 *.pem
+
+# ========================================
+# CRITICAL SECURITY - API KEYS & CREDENTIALS  
+# ========================================
+
+# Firebase Configuration Files
+.firebaserc
+.firebase/
+firebase.json
+
+# Additional Environment Patterns
+.env.development
+.env.production
+.env.test
+
+# API Keys and Secrets
+api-keys.json
+credentials.json
+secrets/
+.secrets/
+
+# Files containing sensitive keywords
+*secret*
+*private*
+*credentials*
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# ========================================
+# VERIFICATION: Protected Files
+# ========================================
+# MUST NEVER be committed:
+# - .env (Gemini API key)
+# - firebase/serviceAccountKey.json
+# - .firebaserc
+# - firebase.json (contains project config)
+# ========================================
