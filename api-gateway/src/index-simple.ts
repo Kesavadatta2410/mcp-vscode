@@ -3,10 +3,25 @@
  * Use this if you're having build issues with ws or node-pty
  */
 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import MCPClientManager from './mcpClient.js';
 import assistantRouter from './routes/assistant.js';
+
+// Load .env from project root
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '..', '..', '.env');
+console.log(`Loading .env from: ${envPath}`);
+
+// Manually load parent .env if dotenv/config didn't find it
+import * as dotenv from 'dotenv';
+dotenv.config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -14,9 +29,38 @@ const PORT = process.env.PORT || 4000;
 // MCP Client Manager
 const mcpManager = new MCPClientManager();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security Middleware
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Helmet for secure HTTP headers (relaxed in dev for easier debugging)
+app.use(helmet({
+    contentSecurityPolicy: isProduction,
+    crossOriginEmbedderPolicy: isProduction,
+}));
+
+// Rate limiting - prevent abuse
+const apiLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: isProduction ? 60 : 1000, // 60 requests/min in prod, 1000 in dev
+    message: { success: false, error: { message: 'Too many requests, please try again later.' } },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// CORS configuration
+const corsOptions = {
+    origin: isProduction
+        ? process.env.ALLOWED_ORIGINS?.split(',') || []
+        : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Body parsing with size limit
+app.use(express.json({ limit: '10mb' }));
+
+// Apply rate limiting to AI endpoints
+app.use('/api/assistant', apiLimiter);
 
 // Mount assistant routes
 app.use('/api/assistant', assistantRouter);

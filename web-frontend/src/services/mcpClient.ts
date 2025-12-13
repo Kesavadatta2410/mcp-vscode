@@ -69,7 +69,7 @@ class MCPClient {
         return this.call({
             server: 'repo',
             tool: 'list_files',
-            args: { path: path || '/' },
+            args: { root_path: path || '/' },
         });
     }
 
@@ -77,7 +77,7 @@ class MCPClient {
         return this.call({
             server: 'repo',
             tool: 'get_tree',
-            args: { max_depth: maxDepth || 5 },
+            args: { root_path: '.', max_depth: maxDepth || 5 },
         });
     }
 
@@ -85,7 +85,7 @@ class MCPClient {
         return this.call({
             server: 'repo',
             tool: 'read_file',
-            args: { file_path: filePath },
+            args: { path: filePath },
         });
     }
 
@@ -105,12 +105,68 @@ class MCPClient {
         });
     }
 
+    async deleteFile(filePath: string): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'repo',
+            tool: 'delete_file',
+            args: { path: filePath },
+        });
+    }
+
     // VSCode MCP tools
     async getDiagnostics(filePath?: string): Promise<MCPResponse<any>> {
         return this.call({
             server: 'vscode',
             tool: 'get_diagnostics',
             args: filePath ? { file_path: filePath } : {},
+        });
+    }
+
+    async searchText(query: string, path?: string): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'search_text',
+            args: { query, path },
+        });
+    }
+
+    async searchSymbol(query: string): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'search_symbol',
+            args: { query },
+        });
+    }
+
+    async formatDocument(filePath: string): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'format_document',
+            args: { path: filePath },
+        });
+    }
+
+    async goToDefinition(filePath: string, line: number, column: number): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'go_to_definition',
+            args: { path: filePath, line, column },
+        });
+    }
+
+    async findReferences(filePath: string, line: number, column: number): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'find_references',
+            args: { path: filePath, line, column },
+        });
+    }
+
+    async getCodeActions(filePath: string, startLine: number, endLine: number): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'get_code_actions',
+            args: { path: filePath, startLine, endLine },
         });
     }
 
@@ -180,6 +236,30 @@ class MCPClient {
         });
     }
 
+    async gitLog(limit?: number): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'git',
+            tool: 'git_log',
+            args: { limit: limit || 10 },
+        });
+    }
+
+    async gitDiff(file?: string): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'git',
+            tool: 'git_diff',
+            args: file ? { file } : {},
+        });
+    }
+
+    async gitBranch(): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'git',
+            tool: 'git_branch',
+            args: {},
+        });
+    }
+
     // GitHub MCP tools
     async githubGetRepos(username: string): Promise<MCPResponse<any>> {
         return this.call({
@@ -196,7 +276,19 @@ class MCPClient {
             args: { repo, title, body: body || '', labels: labels || [] },
         });
     }
+
+    /**
+     * Generic call for AI-planned actions
+     */
+    async callTool(server: string, tool: string, args: Record<string, any>): Promise<MCPResponse<any>> {
+        return this.call({
+            server: server as any,
+            tool,
+            args,
+        });
+    }
 }
 
 export const mcpClient = new MCPClient();
 export default mcpClient;
+

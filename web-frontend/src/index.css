@@ -47,3 +47,301 @@ code {
   height: 100%;
   width: 100%;
 }
+
+/* Keyboard shortcut styling */
+kbd {
+  font-family: 'Segoe UI', Consolas, monospace;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  background-color: #3c3c3c;
+  border: 1px solid #505050;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Panel resize handle */
+.resize-handle {
+  cursor: row-resize;
+  background: transparent;
+  transition: background-color 0.2s;
+}
+
+.resize-handle:hover {
+  background-color: #007acc;
+}
+
+/* Activity bar tooltip */
+.activity-bar-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 4px 8px;
+  background-color: #252526;
+  border: 1px solid #454545;
+  border-radius: 3px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 1px solid #007acc;
+  outline-offset: -1px;
+}
+
+/* XTerm terminal styles */
+.xterm {
+  height: 100%;
+  padding: 4px;
+}
+
+.xterm-viewport {
+  overflow-y: auto !important;
+}
+
+/* ===== Phase 5: UI Polish & Animations ===== */
+
+/* Smooth panel transitions */
+.sidebar-panel {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Scale up animation for cards */
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scaleUp 0.2s ease-out;
+}
+
+/* Button hover effects */
+button {
+  transition: all 0.15s ease;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Card hover effects */
+.hover-card {
+  transition: all 0.2s ease;
+}
+
+.hover-card:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Gradient text for branding */
+.gradient-text {
+  background: linear-gradient(135deg, #007acc 0%, #9b59b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status indicators */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.success {
+  background-color: #4caf50;
+}
+
+.status-dot.warning {
+  background-color: #ff9800;
+}
+
+.status-dot.error {
+  background-color: #f44336;
+}
+
+.status-dot.info {
+  background-color: #2196f3;
+}
+
+/* Glass morphism effect for modals */
+.glass {
+  background: rgba(30, 30, 30, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Syntax highlight colors */
+.token-keyword {
+  color: #569cd6;
+}
+
+.token-string {
+  color: #ce9178;
+}
+
+.token-number {
+  color: #b5cea8;
+}
+
+.token-comment {
+  color: #6a9955;
+}
+
+.token-function {
+  color: #dcdcaa;
+}
+
+/* File icon colors */
+.icon-js {
+  color: #f7df1e;
+}
+
+.icon-ts {
+  color: #3178c6;
+}
+
+.icon-py {
+  color: #3776ab;
+}
+
+.icon-json {
+  color: #cbcb41;
+}
+
+.icon-md {
+  color: #519aba;
+}
+
+.icon-css {
+  color: #264de4;
+}
+
+.icon-html {
+  color: #e34c26;
+}
+
+/* Chat message bubbles */
+.message-bubble {
+  position: relative;
+  border-radius: 12px;
+  max-width: 85%;
+}
+
+.message-bubble.user {
+  background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+  border-bottom-right-radius: 4px;
+}
+
+.message-bubble.assistant {
+  background: linear-gradient(135deg, #2d2d30 0%, #252526 100%);
+  border-bottom-left-radius: 4px;
+  border: 1px solid #3e3e42;
+}
+
+/* Notification toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  z-index: 9999;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Monaco editor enhancements */
+.monaco-editor .margin-view-overlays .line-numbers {
+  color: #858585;
+}
+
+/* Tree view hover */
+.tree-item {
+  transition: background-color 0.1s ease;
+}
+
+.tree-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tree-item.selected {
+  background-color: rgba(0, 122, 204, 0.3);
+}

@@ -35,8 +35,9 @@ class MCPServerClient {
     private buffer = '';
 
     constructor(serverName: string) {
-        // Use process.cwd() which should be the project root when starting from api-gateway
-        const projectRoot = path.resolve(process.cwd(), '..');
+        // Use __dirname to find the servers directory relative to api-gateway/dist/
+        // api-gateway/dist/mcpClient.js -> api-gateway/ -> mcp-vscode-project/
+        const projectRoot = path.resolve(__dirname, '..', '..');
         this.serverPath = path.join(projectRoot, 'servers', `${serverName}-mcp-server`, 'dist', 'index.js');
 
         console.log(`[MCPClient] Looking for ${serverName} at: ${this.serverPath}`);
@@ -127,11 +128,26 @@ class MCPServerClient {
         }
 
         const id = ++this.requestId;
+
+        // The MCP SDK uses 'tools/call' method with tool name and arguments in params
+        // Method format from frontend: 'tools/list_files' means tool name is 'list_files'
+        let mcpMethod = method;
+        let mcpParams = params;
+
+        if (method.startsWith('tools/')) {
+            const toolName = method.substring(6); // Remove 'tools/' prefix
+            mcpMethod = 'tools/call';
+            mcpParams = {
+                name: toolName,
+                arguments: params
+            };
+        }
+
         const request: MCPRequest = {
             jsonrpc: '2.0',
             id,
-            method,
-            params,
+            method: mcpMethod,
+            params: mcpParams,
         };
 
         return new Promise((resolve, reject) => {
