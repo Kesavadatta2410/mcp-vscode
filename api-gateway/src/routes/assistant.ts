@@ -10,8 +10,8 @@ const router = express.Router();
 
 // Read API key at request time (after dotenv has loaded in main file)
 const getGeminiApiKey = () => process.env.GEMINI_API_KEY || '';
-// Using gemini-1.5-flash which is the latest free model
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// Using gemini-2.0-flash which is the latest available model
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 // Available MCP tools for AI planning
 const MCP_TOOLS = [
