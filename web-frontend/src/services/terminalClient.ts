@@ -3,7 +3,8 @@
  * Manages WebSocket connection to backend terminals
  */
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/terminals';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:4000';
 
 interface TerminalConnection {
     id: string;
@@ -16,7 +17,7 @@ class TerminalClient {
     private connections = new Map<string, TerminalConnection>();
 
     async createTerminal(name?: string, cols?: number, rows?: number): Promise<{ id: string; name: string }> {
-        const response = await fetch('/api/terminals/create', {
+        const response = await fetch(`${API_URL}/api/terminals/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, cols, rows }),
@@ -31,7 +32,7 @@ class TerminalClient {
     }
 
     connect(terminalId: string, onData: (data: string) => void, onClose: () => void): void {
-        const ws = new WebSocket(`${WS_URL}?id=${terminalId}`);
+        const ws = new WebSocket(`${WS_URL}/terminals?id=${terminalId}`);
 
         ws.onopen = () => {
             console.log(`Connected to terminal ${terminalId}`);
@@ -79,7 +80,7 @@ class TerminalClient {
     async deleteTerminal(terminalId: string): Promise<void> {
         this.disconnect(terminalId);
 
-        await fetch(`/api/terminals/${terminalId}`, {
+        await fetch(`${API_URL}/api/terminals/${terminalId}`, {
             method: 'DELETE',
         });
     }

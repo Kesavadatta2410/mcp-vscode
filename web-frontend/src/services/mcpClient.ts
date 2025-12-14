@@ -39,7 +39,7 @@ class MCPClient {
      */
     async call<T = any>(options: MCPCallOptions): Promise<MCPResponse<T>> {
         try {
-            const response = await this.client.post(`/mcp/${options.server}/${options.tool}`, options.args);
+            const response = await this.client.post(`/api/mcp/${options.server}/${options.tool}`, options.args);
             // Backend returns { success: true, data: {...} }, extract the data field
             const backendResponse = response.data;
             if (backendResponse.success && backendResponse.data !== undefined) {
@@ -110,6 +110,14 @@ class MCPClient {
             server: 'repo',
             tool: 'delete_file',
             args: { path: filePath },
+        });
+    }
+
+    async createFolder(folderPath: string): Promise<MCPResponse<{ success: boolean }>> {
+        return this.call({
+            server: 'repo',
+            tool: 'create_folder',
+            args: { path: folderPath },
         });
     }
 

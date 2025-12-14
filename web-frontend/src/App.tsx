@@ -42,6 +42,12 @@ function App() {
     // Diagnostics
     const [diagnostics, setDiagnostics] = useState<DiagnosticItem[]>([]);
 
+    // File tree refresh trigger
+    const [fileTreeKey, setFileTreeKey] = useState(0);
+    const refreshFileTree = useCallback(() => {
+        setFileTreeKey(k => k + 1);
+    }, []);
+
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -213,6 +219,26 @@ function App() {
         // TODO: Jump to line in editor
     };
 
+    // Handle AI action execution
+    const handleExecuteAction = useCallback(async (action: any) => {
+        try {
+            const response = await mcpClient.callTool(action.server, action.tool, action.args);
+            if (response.success) {
+                // Refresh file tree after file operations
+                if (['write_file', 'delete_file', 'create_folder'].includes(action.tool)) {
+                    // FileTree will auto-refresh, but we can trigger loadDiagnostics
+                    loadDiagnostics();
+                }
+                return response.data;
+            } else {
+                throw new Error(response.error?.message || 'Action failed');
+            }
+        } catch (error: any) {
+            console.error('Execute action error:', error);
+            throw error;
+        }
+    }, [loadDiagnostics]);
+
     // Note: handleApplyDiff can be restored when AI diff integration is needed
 
     // Command palette commands
@@ -315,6 +341,7 @@ function App() {
                         {/* Sidebar content based on active panel */}
                         {activePanel === 'explorer' && (
                             <FileTree
+                                key={fileTreeKey}
                                 onFileSelect={handleFileSelect}
                                 selectedFile={activeFile}
                             />
@@ -324,6 +351,8 @@ function App() {
                         {activePanel === 'ai' && (
                             <AiChatPanel
                                 currentFile={activeFile}
+                                onExecuteAction={handleExecuteAction}
+                                onRefreshFileTree={refreshFileTree}
                             />
                         )}
                         {activePanel === 'settings' && <SettingsPanel />}

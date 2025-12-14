@@ -151,22 +151,46 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, selectedFile }) => {
     const handleCreateFile = async () => {
         if (!showNewFileInput || !newFileName.trim()) return;
         const fullPath = `${showNewFileInput}/${newFileName}`;
-        if (isCreatingFolder) {
-            // Create empty file inside folder to create the folder
-            await mcpClient.writeFile(`${fullPath}/.gitkeep`, '');
-        } else {
-            await mcpClient.writeFile(fullPath, '');
+        try {
+            if (isCreatingFolder) {
+                // Use create_folder tool directly
+                const response = await mcpClient.call({
+                    server: 'repo',
+                    tool: 'create_folder',
+                    args: { path: fullPath }
+                });
+                if (!response.success) {
+                    console.error('Failed to create folder:', response.error);
+                    alert(`Failed to create folder: ${response.error?.message || 'Unknown error'}`);
+                    return;
+                }
+            } else {
+                await mcpClient.writeFile(fullPath, '');
+            }
+            setShowNewFileInput(null);
+            setNewFileName('');
+            await loadTree();
+        } catch (error) {
+            console.error('Create error:', error);
+            alert('Failed to create. Please try again.');
         }
-        setShowNewFileInput(null);
-        setNewFileName('');
-        await loadTree();
     };
 
     const handleDelete = async (path: string) => {
         if (!confirm(`Delete ${path}?`)) return;
-        // Would call MCP delete_file tool
-        console.log('Delete:', path);
         setContextMenu(prev => ({ ...prev, visible: false }));
+        try {
+            const response = await mcpClient.deleteFile(path);
+            if (response.success) {
+                await loadTree();
+            } else {
+                console.error('Failed to delete:', response.error);
+                alert(`Failed to delete: ${response.error?.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete. Please try again.');
+        }
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,10 +280,10 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, selectedFile }) => {
             <div className="px-2 py-2 flex items-center justify-between border-b border-vscode-border">
                 <span className="text-xs font-semibold text-gray-400 uppercase">Explorer</span>
                 <div className="flex items-center gap-1">
-                    <button onClick={() => handleNewFile('/')} className="p-1 hover:bg-vscode-active rounded" title="New File">
+                    <button onClick={() => handleNewFile('.')} className="p-1 hover:bg-vscode-active rounded" title="New File">
                         <VscNewFile size={14} />
                     </button>
-                    <button onClick={() => handleNewFolder('/')} className="p-1 hover:bg-vscode-active rounded" title="New Folder">
+                    <button onClick={() => handleNewFolder('.')} className="p-1 hover:bg-vscode-active rounded" title="New Folder">
                         <VscNewFolder size={14} />
                     </button>
                     <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-vscode-active rounded" title="Upload">
@@ -281,6 +305,22 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, selectedFile }) => {
 
             {/* File tree */}
             <div className="flex-1 overflow-y-auto">
+                {/* Root-level new file/folder input */}
+                {showNewFileInput === '.' && (
+                    <div className="flex items-center gap-1 px-2 py-1" style={{ paddingLeft: '8px' }}>
+                        {isCreatingFolder ? <FaFolder className="text-yellow-600" /> : <FaFile className="text-gray-500" />}
+                        <input
+                            type="text"
+                            value={newFileName}
+                            onChange={(e) => setNewFileName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' ? handleCreateFile() : e.key === 'Escape' && setShowNewFileInput(null)}
+                            onBlur={() => setTimeout(() => setShowNewFileInput(null), 100)}
+                            autoFocus
+                            className="bg-vscode-editor border border-blue-500 rounded px-1 text-sm w-32"
+                            placeholder={isCreatingFolder ? 'folder name' : 'file name'}
+                        />
+                    </div>
+                )}
                 {tree.map(node => renderNode(node))}
             </div>
 
