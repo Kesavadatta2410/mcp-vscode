@@ -24,6 +24,7 @@ interface MCPResponse<T = any> {
 
 class MCPClient {
     private client: AxiosInstance;
+    private authToken: string | null = null;
 
     constructor() {
         this.client = axios.create({
@@ -35,11 +36,33 @@ class MCPClient {
     }
 
     /**
+     * Set the auth token for session-based requests
+     */
+    setAuthToken(token: string | null): void {
+        this.authToken = token;
+    }
+
+    /**
+     * Get headers including Bearer token if set
+     */
+    private getHeaders(): Record<string, string> {
+        const headers: Record<string, string> = {};
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        return headers;
+    }
+
+    /**
      * Call an MCP tool
      */
     async call<T = any>(options: MCPCallOptions): Promise<MCPResponse<T>> {
         try {
-            const response = await this.client.post(`/api/mcp/${options.server}/${options.tool}`, options.args);
+            const response = await this.client.post(
+                `/api/mcp/${options.server}/${options.tool}`,
+                options.args,
+                { headers: this.getHeaders() }
+            );
             // Backend returns { success: true, data: {...} }, extract the data field
             const backendResponse = response.data;
             if (backendResponse.success && backendResponse.data !== undefined) {

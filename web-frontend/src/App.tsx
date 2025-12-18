@@ -19,11 +19,47 @@ import CommandPalette, { CommandItem } from './components/CommandPalette';
 import PortsPanel from './components/PortsPanel';
 // PreviewPanel available for future implementation
 import AiChatPanel from './components/AiChatPanel';
+import AiLandingPage from './components/AiLandingPage';
+import AuthPage from './components/AuthPage';
+import { useAuth } from './context/AuthContext';
 import mcpClient from './services/mcpClient';
 import type { DiagnosticItem } from './types';
-import { VscCode, VscError, VscWarning } from 'react-icons/vsc';
+import { VscCode, VscError, VscWarning, VscLoading } from 'react-icons/vsc';
 
 function App() {
+    // Auth state
+    const { isAuthenticated, loading: authLoading, getToken } = useAuth();
+
+    // Set auth token in mcpClient when authenticated
+    useEffect(() => {
+        const token = getToken();
+        mcpClient.setAuthToken(token);
+        console.log('Auth state changed - isAuthenticated:', isAuthenticated, 'token:', token ? 'present' : 'null');
+    }, [getToken, isAuthenticated]);
+
+    // Show loading while checking auth
+    if (authLoading) {
+        return (
+            <div className="min-h-screen bg-vscode-bg flex items-center justify-center">
+                <div className="text-center">
+                    <VscLoading className="animate-spin text-blue-500 mx-auto" size={48} />
+                    <p className="text-gray-400 mt-4">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show auth page if not authenticated
+    if (!isAuthenticated) {
+        console.log('Showing AuthPage - isAuthenticated is false');
+        return <AuthPage />;
+    }
+
+    console.log('Showing MainEditor - isAuthenticated is true');
+    return <MainEditor />;
+}
+
+function MainEditor() {
     // Layout state
     const [activePanel, setActivePanel] = useState<PanelType>('explorer');
     const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -188,6 +224,15 @@ function App() {
 
         setSaving(false);
     }, [activeFile, fileContents]);
+
+    // Run file handler
+    const handleRun = useCallback(async () => {
+        if (!activeFile) return;
+
+        // Show output panel
+        setBottomPanelVisible(true);
+        setBottomPanelTab('output');
+    }, [activeFile]);
 
     // Diagnostics loader
     const loadDiagnostics = async (filePath?: string) => {
@@ -382,6 +427,8 @@ function App() {
                             activeTab={activeFile}
                             onTabSelect={setActiveFile}
                             onTabClose={handleTabClose}
+                            onRun={handleRun}
+                            onSave={handleSave}
                         />
 
                         {/* Monaco Editor */}
@@ -401,18 +448,30 @@ function App() {
                                     />
                                 )
                             ) : (
-                                <div className="flex items-center justify-center h-full text-gray-500">
-                                    <div className="text-center">
-                                        <VscCode size={80} className="mx-auto mb-6 opacity-30" />
-                                        <h2 className="text-xl font-light mb-4">MCP VS Code Web</h2>
-                                        <div className="text-sm space-y-2">
-                                            <p>Open a file from the Explorer to get started</p>
-                                            <p className="text-xs text-gray-600">
-                                                Press <kbd className="px-2 py-0.5 bg-vscode-editor rounded text-gray-400">Ctrl+Shift+P</kbd> for Command Palette
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <AiLandingPage
+                                    onStartChat={(message) => {
+                                        setActivePanel('ai');
+                                        setSidebarVisible(true);
+                                        // Store message to be sent when AI panel opens
+                                        (window as any).__pendingAiMessage = message;
+                                    }}
+                                    onOpenExplorer={() => {
+                                        setActivePanel('explorer');
+                                        setSidebarVisible(true);
+                                    }}
+                                    onOpenTerminal={() => {
+                                        setBottomPanelVisible(true);
+                                        setBottomPanelTab('terminal');
+                                    }}
+                                    onOpenSearch={() => {
+                                        setActivePanel('search');
+                                        setSidebarVisible(true);
+                                    }}
+                                    onOpenGit={() => {
+                                        setActivePanel('git');
+                                        setSidebarVisible(true);
+                                    }}
+                                />
                             )}
                         </div>
                     </div>

@@ -29,11 +29,14 @@ const TerminalPane: React.FC = () => {
             const terminal = new Terminal({
                 cursorBlink: true,
                 fontSize: 14,
-                fontFamily: '"Cascadia Code", "Courier New", monospace',
+                lineHeight: 1.2,
+                fontFamily: '"Cascadia Code", "Fira Code", "Consolas", "Courier New", monospace',
+                cursorStyle: 'block',
                 theme: {
                     background: '#1e1e1e',
                     foreground: '#cccccc',
                     cursor: '#ffffff',
+                    cursorAccent: '#1e1e1e',
                     black: '#000000',
                     red: '#cd3131',
                     green: '#0dbc79',
@@ -145,8 +148,8 @@ const TerminalPane: React.FC = () => {
                     <div
                         key={term.id}
                         className={`flex items-center gap-2 px-3 py-1 cursor-pointer rounded-t ${activeTerminalId === term.id
-                                ? 'bg-vscode-panel text-vscode-text'
-                                : 'bg-vscode-sidebar text-gray-400 hover:text-vscode-text'
+                            ? 'bg-vscode-panel text-vscode-text'
+                            : 'bg-vscode-sidebar text-gray-400 hover:text-vscode-text'
                             }`}
                         onClick={() => setActiveTerminalId(term.id)}
                     >

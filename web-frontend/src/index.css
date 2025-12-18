@@ -96,7 +96,7 @@ input:focus-visible {
   outline-offset: -1px;
 }
 
-/* XTerm terminal styles */
+/* XTerm terminal styles - fixed cursor alignment */
 .xterm {
   height: 100%;
   padding: 4px;
@@ -104,6 +104,23 @@ input:focus-visible {
 
 .xterm-viewport {
   overflow-y: auto !important;
+}
+
+.xterm-rows {
+  line-height: 1.2 !important;
+}
+
+.xterm-cursor-layer {
+  z-index: 1;
+}
+
+.xterm .xterm-screen {
+  line-height: normal;
+}
+
+/* Fix cursor alignment in terminal */
+.xterm-helper-textarea {
+  line-height: inherit !important;
 }
 
 /* ===== Phase 5: UI Polish & Animations ===== */
