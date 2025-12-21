@@ -23,7 +23,7 @@ function normalizePath(inputPath: string): string {
  */
 export function isPathAllowed(filePath: string): boolean {
     const config = getExecConfig();
-    const normalized = normalizePath(filePath);
+    const normalized = normalizePath(filePath).toLowerCase();
 
     // If no allowed directories configured, deny all
     if (config.allowedDirectories.length === 0) {
@@ -32,11 +32,18 @@ export function isPathAllowed(filePath: string): boolean {
 
     // Check if path is within any allowed directory
     return config.allowedDirectories.some(allowedDir => {
-        const normalizedDir = normalizePath(allowedDir);
+        const normalizedDir = normalizePath(allowedDir).toLowerCase();
+
+        // Path is exactly the allowed directory
+        if (normalized === normalizedDir) {
+            return true;
+        }
+
         const relativePath = path.relative(normalizedDir, normalized);
 
         // Path is allowed if it doesn't start with '..' (meaning it's not outside the directory)
-        return relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+        // and is not an absolute path (which would mean it's on a different drive on Windows)
+        return relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
     });
 }
 

@@ -23,6 +23,21 @@ interface AuthResponse {
     error?: string;
 }
 
+/**
+ * Safely parse JSON response, handling cases where server returns HTML
+ */
+async function safeJsonParse(response: Response): Promise<any> {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+    } else {
+        // Not JSON - likely HTML error page
+        const text = await response.text();
+        console.error('Expected JSON but got:', text.substring(0, 200));
+        throw new Error('Server returned an invalid response');
+    }
+}
+
 export const authService = {
     /**
      * Get stored session token
@@ -61,7 +76,7 @@ export const authService = {
                 body: JSON.stringify({ email, password, apiKey })
             });
 
-            const data: AuthResponse = await response.json();
+            const data: AuthResponse = await safeJsonParse(response);
 
             if (data.success && data.data) {
                 localStorage.setItem(TOKEN_KEY, data.data.token);
@@ -86,7 +101,7 @@ export const authService = {
                 body: JSON.stringify({ email, password })
             });
 
-            const data: AuthResponse = await response.json();
+            const data: AuthResponse = await safeJsonParse(response);
 
             if (data.success && data.data) {
                 localStorage.setItem(TOKEN_KEY, data.data.token);
@@ -119,7 +134,7 @@ export const authService = {
                 body: JSON.stringify({ apiKey })
             });
 
-            const data = await response.json();
+            const data = await safeJsonParse(response);
             return { success: data.success, error: data.error };
         } catch (e: any) {
             return { success: false, error: e.message || 'Network error' };
@@ -140,7 +155,7 @@ export const authService = {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            const data = await response.json();
+            const data = await safeJsonParse(response);
 
             if (data.success && data.data) {
                 localStorage.setItem(USER_KEY, JSON.stringify(data.data.user));
@@ -195,8 +210,15 @@ export const authService = {
             if (response.ok) {
                 return { valid: true };
             } else {
-                const error = await response.json();
-                return { valid: false, error: error.error?.message || 'Invalid API key' };
+                // Check if response is JSON before parsing
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const error = await response.json();
+                    return { valid: false, error: error.error?.message || 'Invalid API key' };
+                } else {
+                    // Response is not JSON (likely HTML error page)
+                    return { valid: false, error: 'Invalid API key or network error' };
+                }
             }
         } catch (e: any) {
             return { valid: false, error: e.message || 'Network error' };

@@ -14,6 +14,7 @@ import { runPythonSnippet } from './tools/run-python-snippet.js';
 import { runJsSnippet } from './tools/run-js-snippet.js';
 import { runPythonFile } from './tools/run-python-file.js';
 import { runJsFile } from './tools/run-js-file.js';
+import { runCommand, CommandRequest } from './tools/run-command.js';
 import { getExecConfig, validateConfig } from './config.js';
 
 // Zod schemas for input validation
@@ -26,6 +27,13 @@ const SnippetRequestSchema = z.object({
 
 const FileRequestSchema = z.object({
     path: z.string().describe('Path to the script file'),
+    args: z.array(z.string()).optional().describe('Command-line arguments'),
+    timeoutSeconds: z.number().optional().describe('Timeout in seconds'),
+    workingDirectory: z.string().optional().describe('Working directory path')
+});
+
+const CommandRequestSchema = z.object({
+    command: z.string().describe('The command to execute'),
     args: z.array(z.string()).optional().describe('Command-line arguments'),
     timeoutSeconds: z.number().optional().describe('Timeout in seconds'),
     workingDirectory: z.string().optional().describe('Working directory path')
@@ -172,6 +180,33 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     required: ['path'],
                 },
             },
+            {
+                name: 'run_command',
+                description: `Execute any shell command (git, python, node, etc.). Max timeout: ${config.maxTimeoutSeconds}s`,
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        command: {
+                            type: 'string',
+                            description: 'The command to execute (e.g., git, python, npm)',
+                        },
+                        args: {
+                            type: 'array',
+                            items: { type: 'string' },
+                            description: 'Command-line arguments',
+                        },
+                        timeoutSeconds: {
+                            type: 'number',
+                            description: `Timeout in seconds (max: ${config.maxTimeoutSeconds})`,
+                        },
+                        workingDirectory: {
+                            type: 'string',
+                            description: 'Working directory for execution',
+                        },
+                    },
+                    required: ['command'],
+                },
+            },
         ],
     };
 });
@@ -233,6 +268,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             case 'run_js_file':
                 const jsFileArgs = FileRequestSchema.parse(request.params.arguments);
                 result = await runJsFile(jsFileArgs);
+                break;
+
+            case 'run_command':
+                const commandArgs = CommandRequestSchema.parse(request.params.arguments);
+                result = await runCommand(commandArgs);
                 break;
 
             default:

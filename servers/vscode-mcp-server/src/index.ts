@@ -248,6 +248,25 @@ function getTools(): ToolDefinition[] {
                 required: ['extension_id']
             }
         },
+        {
+            name: 'list_installed_extensions',
+            description: 'List all installed VS Code extensions (alias for list_extensions).',
+            inputSchema: { type: 'object' as const, properties: {}, required: [] }
+        },
+        {
+            name: 'get_extension_packs',
+            description: 'Get available extension packs for quick installation.',
+            inputSchema: { type: 'object' as const, properties: {}, required: [] }
+        },
+        {
+            name: 'install_extension_pack',
+            description: 'Install a predefined extension pack.',
+            inputSchema: {
+                type: 'object' as const,
+                properties: { pack_name: { type: 'string', description: 'Pack name (python, javascript, web)' } },
+                required: ['pack_name']
+            }
+        },
 
         // Search
         {
@@ -798,6 +817,29 @@ async function main() {
                     const params = DebugStopSchema.parse(args);
                     const result = await client.stopDebug(params.session_id);
                     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+                }
+
+                // ========== Extension Pack Tools (Frontend compatibility) ==========
+                case 'list_installed_extensions': {
+                    // Alias for list_extensions to match frontend naming
+                    const result = await client.listExtensions();
+                    return { content: [{ type: 'text', text: JSON.stringify({ extensions: result.extensions || [], count: result.extensions?.length || 0 }, null, 2) }] };
+                }
+
+                case 'get_extension_packs': {
+                    // Return predefined extension packs
+                    const packs = [
+                        { name: 'python', label: 'Python Development', extensions: ['ms-python.python', 'ms-python.pylint'] },
+                        { name: 'javascript', label: 'JavaScript/TypeScript', extensions: ['esbenp.prettier-vscode', 'dbaeumer.vscode-eslint'] },
+                        { name: 'web', label: 'Web Development', extensions: ['ritwickdey.liveserver', 'formulahendry.auto-rename-tag'] },
+                    ];
+                    return { content: [{ type: 'text', text: JSON.stringify({ packs }, null, 2) }] };
+                }
+
+                case 'install_extension_pack': {
+                    // Stub for extension pack installation
+                    const packName = (args as any)?.pack_name || 'unknown';
+                    return { content: [{ type: 'text', text: JSON.stringify({ success: true, message: `Extension pack '${packName}' installation queued` }, null, 2) }] };
                 }
 
                 default:

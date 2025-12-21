@@ -12,6 +12,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import MCPClientManager from './mcpClient.js';
 import assistantRouter from './routes/assistant.js';
+import authRouter from './routes/auth.js';
 
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);
@@ -62,7 +63,8 @@ app.use(express.json({ limit: '10mb' }));
 // Apply rate limiting to AI endpoints
 app.use('/api/assistant', apiLimiter);
 
-// Mount assistant routes
+// Mount routes
+app.use('/api/auth', authRouter);
 app.use('/api/assistant', assistantRouter);
 
 // Health check

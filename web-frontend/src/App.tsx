@@ -12,7 +12,7 @@ import GitPanel from './components/GitPanel';
 import SearchPanel from './components/SearchPanel';
 import SettingsPanel from './components/SettingsPanel';
 // AssistantPanel kept for reference but AiChatPanel is now primary
-import TerminalPane from './components/TerminalPane';
+import CommandRunner from './components/CommandRunner';
 import ActivityBar, { PanelType } from './components/ActivityBar';
 import EditorTabs, { EditorTab } from './components/EditorTabs';
 import CommandPalette, { CommandItem } from './components/CommandPalette';
@@ -21,10 +21,11 @@ import PortsPanel from './components/PortsPanel';
 import AiChatPanel from './components/AiChatPanel';
 import AiLandingPage from './components/AiLandingPage';
 import AuthPage from './components/AuthPage';
+import ExtensionManager from './components/ExtensionManager';
 import { useAuth } from './context/AuthContext';
 import mcpClient from './services/mcpClient';
 import type { DiagnosticItem } from './types';
-import { VscCode, VscError, VscWarning, VscLoading } from 'react-icons/vsc';
+import { VscCode, VscError, VscWarning, VscLoading, VscExtensions } from 'react-icons/vsc';
 
 function App() {
     // Auth state
@@ -77,6 +78,9 @@ function MainEditor() {
 
     // Diagnostics
     const [diagnostics, setDiagnostics] = useState<DiagnosticItem[]>([]);
+
+    // Extension installation status
+    const [extensionStatus, setExtensionStatus] = useState('Extensions ready');
 
     // File tree refresh trigger
     const [fileTreeKey, setFileTreeKey] = useState(0);
@@ -402,10 +406,7 @@ function MainEditor() {
                         )}
                         {activePanel === 'settings' && <SettingsPanel />}
                         {activePanel === 'extensions' && (
-                            <div className="p-4 text-gray-400">
-                                <h2 className="text-sm font-semibold text-white mb-4">Extensions</h2>
-                                <p className="text-xs">Extension management coming soon...</p>
-                            </div>
+                            <ExtensionManager onStatusChange={setExtensionStatus} />
                         )}
                         {activePanel === 'debug' && (
                             <div className="p-4 text-gray-400">
@@ -522,7 +523,7 @@ function MainEditor() {
                                     />
                                 )}
                                 {bottomPanelTab === 'terminal' && (
-                                    <TerminalPane />
+                                    <CommandRunner />
                                 )}
                                 {bottomPanelTab === 'output' && (
                                     <ExecutionPanel
@@ -546,6 +547,10 @@ function MainEditor() {
                     {activeFile && (
                         <span>{activeFile.split('/').pop() || activeFile.split('\\').pop()}</span>
                     )}
+                    <span className="flex items-center gap-1 text-blue-200">
+                        <VscExtensions size={12} />
+                        {extensionStatus}
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-4">

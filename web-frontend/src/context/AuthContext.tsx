@@ -46,17 +46,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check existing auth on mount
     useEffect(() => {
         const checkAuth = async () => {
-            if (authService.isAuthenticated()) {
-                const result = await authService.validateSession();
-                if (result.valid) {
-                    setIsAuthenticated(true);
-                    setUser(result.user || null);
-                    setHasApiKey(result.hasApiKey || false);
-                } else {
+            const hasToken = authService.isAuthenticated();
+            console.log('[AuthContext] Checking auth, hasToken:', hasToken);
+
+            if (hasToken) {
+                try {
+                    const result = await authService.validateSession();
+                    console.log('[AuthContext] Session validation result:', result);
+                    if (result.valid) {
+                        setIsAuthenticated(true);
+                        setUser(result.user || null);
+                        setHasApiKey(result.hasApiKey || false);
+                    } else {
+                        // Invalid session - clear it and show login
+                        console.log('[AuthContext] Session invalid, clearing auth');
+                        authService.logout();
+                        setIsAuthenticated(false);
+                        setUser(null);
+                        setHasApiKey(false);
+                    }
+                } catch (error) {
+                    // Validation failed (network error, server restart, etc.)
+                    console.error('[AuthContext] Session validation error:', error);
+                    // Clear potentially stale session
+                    authService.logout();
                     setIsAuthenticated(false);
                     setUser(null);
                     setHasApiKey(false);
                 }
+            } else {
+                // No token - ensure we show login
+                setIsAuthenticated(false);
             }
             setLoading(false);
         };

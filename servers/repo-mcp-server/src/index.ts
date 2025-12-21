@@ -27,6 +27,8 @@ import { readFile } from './tools/read-file.js';
 import { writeFile } from './tools/write-file.js';
 import { applyPatch } from './tools/apply-patch.js';
 import { getTree } from './tools/get-tree.js';
+import { createFolder } from './tools/create-folder.js';
+import { deleteFile } from './tools/delete-file.js';
 import { createLogger, getAllowedDirectories } from './utils/safety.js';
 
 // Create logger
@@ -60,6 +62,16 @@ const GetTreeSchema = z.object({
     root_path: z.string().describe('Root directory path to build tree from'),
     max_depth: z.number().optional().describe('Maximum depth to traverse (default: 5)'),
     include_hidden: z.boolean().optional().describe('Include hidden files (default: false)')
+});
+
+const CreateFolderSchema = z.object({
+    path: z.string().describe('Path to the folder to create'),
+    recursive: z.boolean().optional().describe('Create parent directories if needed (default: true)')
+});
+
+const DeleteFileSchema = z.object({
+    path: z.string().describe('Path to the file or folder to delete'),
+    recursive: z.boolean().optional().describe('Delete directories recursively (default: true)')
 });
 
 // Tool definitions
@@ -126,6 +138,30 @@ const TOOLS = [
                 include_hidden: { type: 'boolean', description: 'Include hidden files (default: false)' }
             },
             required: ['root_path']
+        }
+    },
+    {
+        name: 'create_folder',
+        description: 'Create a new directory. Creates parent directories if they don\'t exist.',
+        inputSchema: {
+            type: 'object' as const,
+            properties: {
+                path: { type: 'string', description: 'Path to the folder to create' },
+                recursive: { type: 'boolean', description: 'Create parent directories if needed (default: true)' }
+            },
+            required: ['path']
+        }
+    },
+    {
+        name: 'delete_file',
+        description: 'Delete a file or directory. For directories, recursively deletes contents.',
+        inputSchema: {
+            type: 'object' as const,
+            properties: {
+                path: { type: 'string', description: 'Path to the file or folder to delete' },
+                recursive: { type: 'boolean', description: 'Delete directories recursively (default: true)' }
+            },
+            required: ['path']
         }
     }
 ];
@@ -205,6 +241,22 @@ async function main() {
                 case 'get_tree': {
                     const params = GetTreeSchema.parse(args);
                     const result = await getTree(params);
+                    return {
+                        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+                    };
+                }
+
+                case 'create_folder': {
+                    const params = CreateFolderSchema.parse(args);
+                    const result = await createFolder(params);
+                    return {
+                        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
+                    };
+                }
+
+                case 'delete_file': {
+                    const params = DeleteFileSchema.parse(args);
+                    const result = await deleteFile(params);
                     return {
                         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
                     };

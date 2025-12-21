@@ -46,14 +46,21 @@ export function isPathAllowed(targetPath: string): boolean {
     }
 
     // Resolve to absolute path and normalize (handles Windows short paths)
-    const resolvedPath = normalizePath(targetPath);
+    const resolvedPath = normalizePath(targetPath).toLowerCase();
 
     // Check if the path starts with any allowed directory
     return allowedDirs.some(allowedDir => {
-        const relative = path.relative(allowedDir, resolvedPath);
+        const normalizedDir = allowedDir.toLowerCase();
+
+        // Path is exactly the allowed directory
+        if (resolvedPath === normalizedDir) {
+            return true;
+        }
+
+        const relative = path.relative(normalizedDir, resolvedPath);
         // Path is within allowed dir if relative path doesn't start with '..'
         // and is not an absolute path
-        return relative !== '' ? !relative.startsWith('..') && !path.isAbsolute(relative) : true;
+        return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
     });
 }
 

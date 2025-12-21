@@ -87,6 +87,28 @@ class MCPClient {
         }
     }
 
+    /**
+     * Parse MCP response content format
+     * MCP returns: { content: [{ type: 'text', text: 'JSON string' }] }
+     */
+    private parseMcpContent(data: any): any {
+        if (!data) return data;
+
+        // Handle MCP SDK response format
+        if (data.content && Array.isArray(data.content) && data.content[0]) {
+            const textContent = data.content[0].text;
+            if (typeof textContent === 'string') {
+                try {
+                    return JSON.parse(textContent);
+                } catch {
+                    // If not JSON, return the raw text
+                    return { content: textContent };
+                }
+            }
+        }
+        return data;
+    }
+
     // Repo MCP tools
     async listFiles(path?: string): Promise<MCPResponse<string[]>> {
         return this.call({
@@ -105,18 +127,30 @@ class MCPClient {
     }
 
     async readFile(filePath: string): Promise<MCPResponse<{ content: string; lines: number }>> {
-        return this.call({
+        const response = await this.call({
             server: 'repo',
             tool: 'read_file',
             args: { path: filePath },
         });
+
+        if (response.success && response.data) {
+            const parsed = this.parseMcpContent(response.data);
+            return {
+                success: true,
+                data: {
+                    content: parsed.content || '',
+                    lines: (parsed.content || '').split('\n').length
+                },
+            };
+        }
+        return response as MCPResponse<{ content: string; lines: number }>;
     }
 
     async writeFile(filePath: string, content: string): Promise<MCPResponse<{ success: boolean }>> {
         return this.call({
             server: 'repo',
             tool: 'write_file',
-            args: { file_path: filePath, content },
+            args: { path: filePath, content },
         });
     }
 
@@ -201,29 +235,80 @@ class MCPClient {
         });
     }
 
-    // Exec MCP tools
-    async runPythonFile(filePath: string, args?: string[], timeoutSeconds?: number): Promise<MCPResponse<any>> {
+    // Extension Management
+    async listInstalledExtensions(): Promise<MCPResponse<{ extensions: string[]; count: number }>> {
         return this.call({
-            server: 'exec',
-            tool: 'run_python_file',
-            args: {
-                file_path: filePath,
-                args: args || [],
-                timeoutSeconds: timeoutSeconds || 30,
-            },
+            server: 'vscode',
+            tool: 'list_installed_extensions',
+            args: {},
         });
     }
 
-    async runJsFile(filePath: string, args?: string[], timeoutSeconds?: number): Promise<MCPResponse<any>> {
+    async installExtension(extensionId: string): Promise<MCPResponse<any>> {
         return this.call({
+            server: 'vscode',
+            tool: 'install_extension',
+            args: { extension_id: extensionId },
+        });
+    }
+
+    async installExtensionPack(packName: string): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'install_extension_pack',
+            args: { pack_name: packName },
+        });
+    }
+
+    async getExtensionPacks(): Promise<MCPResponse<any>> {
+        return this.call({
+            server: 'vscode',
+            tool: 'get_extension_packs',
+            args: {},
+        });
+    }
+
+    // Exec MCP tools
+    async runPythonFile(filePath: string, args?: string[], timeoutSeconds?: number): Promise<MCPResponse<any>> {
+        const response = await this.call({
             server: 'exec',
-            tool: 'run_javascript_file',
+            tool: 'run_python_file',
             args: {
-                file_path: filePath,
+                path: filePath,
                 args: args || [],
                 timeoutSeconds: timeoutSeconds || 30,
             },
         });
+
+        if (response.success && response.data) {
+            const parsed = this.parseMcpContent(response.data);
+            return {
+                success: true,
+                data: parsed,
+            };
+        }
+        return response;
+    }
+
+    async runJsFile(filePath: string, args?: string[], timeoutSeconds?: number): Promise<MCPResponse<any>> {
+        const response = await this.call({
+            server: 'exec',
+            tool: 'run_js_file',
+            args: {
+                path: filePath,
+                args: args || [],
+                timeoutSeconds: timeoutSeconds || 30,
+            },
+        });
+
+        if (response.success && response.data) {
+            const parsed = this.parseMcpContent(response.data);
+            return {
+                success: true,
+                data: parsed,
+            };
+        }
+        return response;
     }
 
     async runPythonSnippet(code: string, args?: Record<string, any>, timeoutSeconds?: number): Promise<MCPResponse<any>> {
@@ -248,6 +333,28 @@ class MCPClient {
                 timeoutSeconds: timeoutSeconds || 30,
             },
         });
+    }
+
+    async runCommand(command: string, args?: string[], timeoutSeconds?: number, workingDirectory?: string): Promise<MCPResponse<any>> {
+        const response = await this.call({
+            server: 'exec',
+            tool: 'run_command',
+            args: {
+                command,
+                args: args || [],
+                timeoutSeconds: timeoutSeconds || 30,
+                workingDirectory,
+            },
+        });
+
+        if (response.success && response.data) {
+            const parsed = this.parseMcpContent(response.data);
+            return {
+                success: true,
+                data: parsed,
+            };
+        }
+        return response;
     }
 
     // Git MCP tools
